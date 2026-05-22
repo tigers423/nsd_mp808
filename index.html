@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>KIA 타이거즈</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+:root {
+ --red: #C8102E;
+ --red2: rgba(200,16,46,.12);
+ --bg: #0a0a0a;
+ --card: #141414;
+ --border: #242424;
+ --text: #e8e8e8;
+ --dim: #666;
+ --dim2: #333;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#111;font-family:'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif}
+body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:0}
+
+/* 모바일: 풀스크린 */
+.app{width:100%;max-width:420px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative;margin:0 auto}
+
+/* 데스크탑: 폰 목업 */
+@media(min-width:480px){
+ body{align-items:center;padding:20px 0;background:#0d0d0d}
+ .app{max-width:390px;min-height:auto;height:820px;border-radius:40px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,.8),0 0 0 1px #222;border:none}
+}
+
+/* 헤더 */
+.hdr{background:var(--red);padding:12px 16px 0;flex-shrink:0}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.logo-wrap{display:flex;align-items:center;gap:9px}
+.logo-circle{width:32px;height:32px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--red);letter-spacing:-.5px}
+.hdr-title{color:#fff;font-size:16px;font-weight:700}
+.hdr-sub{color:rgba(255,255,255,.65);font-size:10px;margin-top:1px}
+.nav-wrap{display:flex;overflow-x:auto;scrollbar-width:none}
+.nav-wrap::-webkit-scrollbar{display:none}
+.nav-item{flex-shrink:0;padding:8px 12px;font-size:11px;color:rgba(255,255,255,.5);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;transition:all .2s}
+.nav-item.on{color:#fff;border-bottom-color:#fff;font-weight:600}
+
+/* 바디 */
+.body{flex:1;overflow-y:auto;padding:12px;scrollbar-width:none}
+.body::-webkit-scrollbar{display:none}
+.page{display:none}.page.on{display:block}
+
+/* 공통 카드 */
+.sec{font-size:10px;color:var(--dim);font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin:12px 0 7px}
+.card{background:var(--card);border-radius:12px;padding:8px 12px;margin-bottom:8px;border:.5px solid var(--border)}
+
+/* 홈 - 오늘경기 */
+.today-card{background:linear-gradient(135deg,#1e0a0f,#1a0608);border:.5px solid #3a1520;border-radius:12px;padding:12px 14px;margin-bottom:0}
+.today-lbl{font-size:10px;color:var(--red);font-weight:600;margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.today-lbl::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.today-teams{font-size:17px;color:#fff;font-weight:700}
+.today-info{font-size:11px;color:var(--dim);margin-top:4px}
+.today-sel{font-size:11px;color:var(--red);margin-top:3px}
+.home-badge{background:var(--red);color:#fff;font-size:10px;padding:5px 12px;border-radius:8px;font-weight:600}
+
+/* 누적 성적 */
+.stat-row{display:flex;gap:6px;margin-bottom:0}
+.stat-box{flex:1;background:var(--card);border-radius:10px;padding:9px 4px;border:.5px solid var(--border);text-align:center}
+.stat-val{font-size:18px;font-weight:700;color:#fff}
+.stat-val.red{color:var(--red)}
+.stat-lbl{font-size:9px;color:var(--dim);margin-top:2px}
+
+/* KBO 순위표 */
+.standings-scroll{overflow-x:auto;scrollbar-width:none}
+.standings-scroll::-webkit-scrollbar{display:none}
+.st-table{min-width:440px;width:100%}
+.st-head,.st-row{display:flex;align-items:center;padding:4px 8px}
+.st-head span,.st-row div{font-size:10px;text-align:center}
+.st-head{border-bottom:.5px solid var(--border)}
+.st-head span{color:#444;font-weight:600}
+.st-row{border-bottom:.5px solid #1a1a1a}
+.st-row:last-child{border:none}
+.st-row.kia{background:rgba(200,16,46,.07);border-left:2px solid var(--red)}
+.col-r{width:18px;flex-shrink:0}
+.col-t{width:46px;flex-shrink:0;padding-left:4px;text-align:left!important;font-weight:600;color:var(--text)}
+.col-t.kia{color:var(--red)}
+.col-n{flex:1;color:#999}
+.col-n.bold{color:#fff;font-weight:700}
+.col-n.dim{color:#444}
+.col-rec{width:36px;flex-shrink:0;font-size:9px}
+
+/* 직전경기 */
+.prev-card{background:var(--card);border-radius:12px;padding:10px 14px;border:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.prev-score{font-size:17px;color:#fff;font-weight:700;margin:3px 0}
+.result-badge{font-size:12px;padding:5px 14px;border-radius:8px;font-weight:700}
+.badge-w{background:var(--red2);color:var(--red)}
+.badge-l{background:#1e1e1e;color:#555}
+.badge-d{background:#1e1e1e;color:#777}
+.badge-c{background:#111;color:#444}
+
+/* 이번주 / 경기행 */
+.game-row{display:flex;align-items:center;padding:7px 0;border-bottom:.5px solid #1a1a1a;gap:7px}
+.game-row:last-child{border:none}
+.game-row.today-row{background:rgba(200,16,46,.05);margin:0 -12px;padding:7px 12px}
+.gr-date{font-size:10px;color:var(--dim);width:32px;text-align:center;flex-shrink:0;line-height:1.5}
+.gr-day{font-size:9px;color:#2a2a2a}
+.gr-info{flex:1}
+.gr-teams{font-size:12px;color:#fff;font-weight:600}
+.gr-sub{font-size:10px;color:#3a3a3a;margin-top:1px}
+.gr-result{text-align:right;flex-shrink:0;min-width:42px}
+.score-w{font-size:12px;font-weight:700;color:var(--red)}
+.score-l{font-size:12px;font-weight:700;color:#3a3a3a}
+.score-d{font-size:12px;font-weight:700;color:#666}
+.score-s{font-size:11px;color:#2a2a2a}
+.bw{font-size:9px;padding:1px 5px;border-radius:3px;background:var(--red2);color:var(--red);display:block;margin-top:2px;text-align:center}
+.bl{font-size:9px;padding:1px 5px;border-radius:3px;background:#1a1a1a;color:#3a3a3a;display:block;margin-top:2px;text-align:center}
+.bd{font-size:9px;padding:1px 5px;border-radius:3px;background:#1a1a1a;color:#555;display:block;margin-top:2px;text-align:center}
+.bc{font-size:9px;padding:1px 5px;border-radius:3px;background:#111;color:#333;display:block;margin-top:2px;text-align:center}
+
+/* 월탭 */
+.month-tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.month-tabs::-webkit-scrollbar{display:none}
+.mtab{flex-shrink:0;padding:5px 12px;border-radius:20px;font-size:10px;font-weight:600;border:.5px solid var(--border);color:var(--dim);cursor:pointer;transition:all .15s}
+.mtab.on{background:var(--red);border-color:var(--red);color:#fff}
+.mtab.past{border-color:#1a1a1a;color:#2a2a2a}
+
+/* 1군 현황 */
+.entry-tabs{display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;scrollbar-width:none}
+.entry-tabs::-webkit-scrollbar{display:none}
+.etab{flex-shrink:0;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600;border:.5px solid var(--border);color:var(--dim);cursor:pointer;transition:all .15s;white-space:nowrap}
+.etab.on{background:var(--red);border-color:var(--red);color:#fff}
+.sort-bar{display:flex;gap:6px;margin-bottom:8px}
+.sbtn{flex-shrink:0;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600;border:.5px solid var(--border);color:var(--dim);cursor:pointer;transition:all .15s}
+.sbtn.on{background:var(--red);border-color:var(--red);color:#fff}
+.roster-summary{display:flex;gap:6px;margin-bottom:8px}
+.rs-box{flex:1;background:var(--card);border-radius:10px;padding:8px 4px;text-align:center;border:.5px solid var(--border)}
+.rs-val{font-size:15px;font-weight:700}
+.rs-lbl{font-size:9px;color:var(--dim);margin-top:2px}
+.tbl-wrap{overflow-x:auto;scrollbar-width:none}
+.tbl-wrap::-webkit-scrollbar{display:none}
+.rtbl{width:100%;min-width:480px;border-collapse:collapse}
+.rtbl th{font-size:9px;color:#444;font-weight:600;padding:6px 7px;border-bottom:.5px solid var(--border);text-align:center;background:var(--bg);white-space:nowrap;position:sticky;top:0}
+.rtbl td{font-size:11px;color:#bbb;padding:6px 7px;border-bottom:.5px solid #141414;text-align:center;white-space:nowrap}
+.rtbl td.tname{color:#fff;font-weight:600;text-align:left}
+.rtbl tr:last-child td{border:none}
+.rtbl tr:hover td{background:rgba(255,255,255,.02)}
+.pos-tag{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600}
+
+/* 하단 네비 */
+.bnav{display:flex;background:#0a0a0a;border-top:.5px solid var(--border);padding:6px 0 max(6px, env(safe-area-inset-bottom));flex-shrink:0;align-items:center}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px 0;transition:all .15s}
+.bn i{font-size:20px;color:#333}
+.bn span{font-size:8px;color:#333;font-weight:600}
+.bn.on i,.bn.on span{color:var(--red)}
+.bnav-div{width:.5px;height:34px;background:var(--border);flex-shrink:0}
+.bn-ext{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px 0;transition:opacity .15s}
+.bn-ext:active{opacity:.6}
+.bn-ext span{font-size:8px;color:#444;font-weight:600}
+
+/* 오늘 표시 */
+.today-chip{font-size:9px;color:var(--red);font-weight:700;background:var(--red2);padding:1px 5px;border-radius:4px;margin-left:4px}
+</style>
+</head>
+<body>
+<div class="app">
+
+ <!-- 헤더 -->
+ <div class="hdr">
+  <div class="hdr-top">
+   <div class="logo-wrap">
+    <div class="logo-circle">KIA</div>
+    <div>
+     <div class="hdr-title">KIA 타이거즈</div>
+     <div class="hdr-sub">2026 시즌 · KBO 공식 데이터</div>
+    </div>
+   </div>
+   <i class="ti ti-wifi" style="color:rgba(255,255,255,.6);font-size:18px"></i>
+  </div>
+  <div class="nav-wrap">
+   <div class="nav-item on" onclick="sw(0)">홈</div>
+   <div class="nav-item" onclick="sw(1)">전체일정</div>
+   <div class="nav-item" onclick="sw(2)">경기결과</div>
+   <div class="nav-item" onclick="sw(3)">1군현황</div>
+  </div>
+ </div>
+
+ <!-- 바디 -->
+ <div class="body" id="mainBody">
+
+  <!-- 홈 -->
+  <div class="page on" id="p0">
+   <div class="today-card" style="margin-top:2px">
+    <div class="today-lbl">오늘 경기 · 5/20 (수)</div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+     <div>
+      <div class="today-teams">KIA vs LG</div>
+      <div class="today-info">광주-기아챔피언스필드 · 18:30</div>
+      <div class="today-sel">선발: 양현종 vs 송승기</div>
+     </div>
+     <div class="home-badge">홈</div>
+    </div>
+   </div>
+
+   <div class="sec">2026 시즌 누적 성적</div>
+   <div class="stat-row">
+    <div class="stat-box"><div class="stat-val red" id="sw">-</div><div class="stat-lbl">승</div></div>
+    <div class="stat-box"><div class="stat-val" id="sd">-</div><div class="stat-lbl">무</div></div>
+    <div class="stat-box"><div class="stat-val" id="sl">-</div><div class="stat-lbl">패</div></div>
+    <div class="stat-box"><div class="stat-val red" id="sp">-</div><div class="stat-lbl">승률</div></div>
+    <div class="stat-box"><div class="stat-val" style="font-size:15px">3.5</div><div class="stat-lbl">게임차</div></div>
+   </div>
+
+   <div class="sec">🏆 KBO 리그 순위 <span style="color:var(--red);font-size:9px;font-weight:400">5/19 기준</span></div>
+   <div class="card" style="padding:6px 8px">
+    <div class="standings-scroll">
+     <div class="st-table">
+      <div class="st-head">
+       <span class="col-r">#</span>
+       <span class="col-t">팀</span>
+       <span class="col-n">경기</span>
+       <span class="col-n">승</span>
+       <span class="col-n">무</span>
+       <span class="col-n">패</span>
+       <span class="col-n bold">승률</span>
+       <span class="col-n">게임차</span>
+       <span class="col-rec">최근</span>
+      </div>
+      <div id="stBody"></div>
+     </div>
+    </div>
+   </div>
+
+   <div class="sec">직전 경기</div>
+   <div class="prev-card">
+    <div>
+     <div style="font-size:11px;color:var(--dim)">5/19 (화) · 광주 · 홈</div>
+     <div class="prev-score">KIA <span style="color:var(--red)">14</span> - <span style="color:#333">0</span> LG</div>
+     <div style="font-size:10px;color:#3a3a3a;margin-top:2px">승리투수: 올러 · 패전: 톨허스트</div>
+    </div>
+    <div class="result-badge badge-w">승</div>
+   </div>
+
+   <div class="sec">이번주 남은 경기</div>
+   <div class="card">
+    <div class="game-row today-row">
+     <div class="gr-date">5/20<div class="gr-day">수</div></div>
+     <div class="gr-info"><div class="gr-teams">KIA vs LG <span class="today-chip">오늘</span></div><div class="gr-sub">광주 · 홈 · 18:30</div></div>
+     <div class="gr-result"><div class="score-s">18:30</div></div>
+    </div>
+    <div class="game-row"><div class="gr-date">5/21<div class="gr-day">목</div></div><div class="gr-info"><div class="gr-teams">KIA vs LG</div><div class="gr-sub">광주 · 홈 · 18:30</div></div><div class="gr-result"><div class="score-s">예정</div></div></div>
+    <div class="game-row"><div class="gr-date">5/22<div class="gr-day">금</div></div><div class="gr-info"><div class="gr-teams">KIA vs SSG</div><div class="gr-sub">광주 · 홈 · 18:30</div></div><div class="gr-result"><div class="score-s">예정</div></div></div>
+    <div class="game-row"><div class="gr-date">5/23<div class="gr-day">토</div></div><div class="gr-info"><div class="gr-teams">KIA vs SSG</div><div class="gr-sub">광주 · 홈 · 17:00</div></div><div class="gr-result"><div class="score-s">예정</div></div></div>
+    <div class="game-row"><div class="gr-date">5/24<div class="gr-day">일</div></div><div class="gr-info"><div class="gr-teams">KIA vs SSG</div><div class="gr-sub">광주 · 홈 · 14:00</div></div><div class="gr-result"><div class="score-s">예정</div></div></div>
+   </div>
+  </div>
+
+  <!-- 전체일정 -->
+  <div class="page" id="p1">
+   <div class="month-tabs" id="monthTabs"></div>
+   <div id="schedBody"></div>
+  </div>
+
+  <!-- 경기결과 -->
+  <div class="page" id="p2">
+   <div class="sec" style="margin-top:0">완료된 경기 · 최신순</div>
+   <div id="resultBody"></div>
+  </div>
+
+  <!-- 1군현황 -->
+  <div class="page" id="p3">
+   <div class="roster-summary" id="rSummary"></div>
+   <div class="entry-tabs">
+    <div class="etab on" onclick="setEtab(0)">1군</div>
+    <div class="etab" onclick="setEtab(1)">퓨처스</div>
+    <div class="etab" onclick="setEtab(2)">육성/잔류</div>
+    <div class="etab" onclick="setEtab(3)">등록/말소</div>
+   </div>
+   <div class="sort-bar">
+    <div class="sbtn on" onclick="setSort('NAME')">이름순</div>
+    <div class="sbtn" onclick="setSort('POS')">포지션순</div>
+    <div class="sbtn" onclick="setSort('NUM')">등번호순</div>
+   </div>
+   <div class="tbl-wrap">
+    <table class="rtbl">
+     <thead><tr>
+      <th>No</th><th style="text-align:left">선수명</th><th>포지션</th>
+      <th>등번호</th><th>투타</th><th>생년월일</th><th>신장</th><th>체중</th>
+     </tr></thead>
+     <tbody id="rosterBody"></tbody>
+    </table>
+   </div>
+  </div>
+
+ </div>
+
+ <!-- 하단 네비 -->
+ <div class="bnav">
+  <div class="bn on" onclick="sw(0)"><i class="ti ti-home"></i><span>홈</span></div>
+  <div class="bn" onclick="sw(1)"><i class="ti ti-calendar"></i><span>전체일정</span></div>
+  <div class="bn" onclick="sw(2)"><i class="ti ti-trophy"></i><span>결과</span></div>
+  <div class="bn" onclick="sw(3)"><i class="ti ti-list-check"></i><span>1군현황</span></div>
+  <div class="bnav-div"></div>
+  <!-- 갸티비: 회색배경 검정T -->
+  <div class="bn-ext" onclick="window.open('https://www.youtube.com/@kiatigerstv','_blank')">
+   <svg width="30" height="22" viewBox="0 0 60 44" xmlns="http://www.w3.org/2000/svg">
+    <rect width="60" height="44" rx="6" fill="#888"/>
+    <polygon points="5,7 55,7 55,19 38,19 38,39 22,39 22,19 5,19" fill="#1a1a2e"/>
+    <polygon points="5,7 55,7 55,19 38,19 38,39 22,39 22,19 5,19" fill="none" stroke="#C8102E" stroke-width="2.5"/>
+    <polygon points="7,9 53,9 53,17 36,17 36,37 24,37 24,17 7,17" fill="#111"/>
+    <polygon points="24,17 36,17 36,37 24,37" fill="#222"/>
+   </svg>
+   <span>갸티비</span>
+  </div>
+  <!-- 공식홈피: 흰배경 빨강T -->
+  <div class="bn-ext" onclick="window.open('https://tigers.co.kr','_blank')">
+   <svg width="30" height="22" viewBox="0 0 60 44" xmlns="http://www.w3.org/2000/svg">
+    <rect width="60" height="44" rx="6" fill="#fff"/>
+    <polygon points="4,6 56,6 56,18 39,18 39,40 21,40 21,18 4,18" fill="#1a1a2e"/>
+    <polygon points="7,9 53,9 53,15 36,15 36,37 24,37 24,15 7,15" fill="#C8102E"/>
+    <polygon points="24,15 36,15 36,37 24,37" fill="#e84060"/>
+    <polygon points="22,9 38,9 38,15 22,15" fill="#e84060"/>
+   </svg>
+   <span>공식홈피</span>
+  </div>
+ </div>
+
+</div>
+
+<script>
+// KBO 순위 (5/19 공식)
+const standings=[
+ {r:1,t:'삼성',g:43,w:25,d:1,l:17,pct:.595,gc:'-', rec:'1승',kia:false},
+ {r:1,t:'KT',  g:43,w:25,d:1,l:17,pct:.595,gc:'-', rec:'1패',kia:false},
+ {r:3,t:'LG',  g:43,w:25,d:0,l:18,pct:.581,gc:'0.5',rec:'1패',kia:false},
+ {r:4,t:'SSG', g:43,w:22,d:1,l:20,pct:.524,gc:'3',  rec:'2패',kia:false},
+ {r:5,t:'KIA', g:44,w:22,d:1,l:21,pct:.512,gc:'3.5',rec:'2승',kia:true},
+ {r:6,t:'두산',g:44,w:21,d:1,l:22,pct:.488,gc:'4.5',rec:'3승',kia:false},
+ {r:7,t:'한화',g:43,w:20,d:0,l:23,pct:.465,gc:'5.5',rec:'2패',kia:false},
+ {r:8,t:'NC',  g:43,w:18,d:1,l:24,pct:.429,gc:'7',  rec:'2패',kia:false},
+ {r:9,t:'롯데',g:42,w:17,d:1,l:24,pct:.415,gc:'7.5',rec:'1승',kia:false},
+ {r:10,t:'키움',g:44,w:17,d:1,l:26,pct:.395,gc:'8.5',rec:'2승',kia:false},
+];
+document.getElementById('stBody').innerHTML=standings.map(s=>`
+ <div class="st-row${s.kia?' kia':''}">
+  <div class="col-r" style="color:${s.r<=2?'#f5a623':'#444'};font-weight:${s.r<=2?700:400}">${s.r}</div>
+  <div class="col-t${s.kia?' kia':''}">${s.t}</div>
+  <div class="col-n dim">${s.g}</div>
+  <div class="col-n">${s.w}</div>
+  <div class="col-n dim">${s.d}</div>
+  <div class="col-n">${s.l}</div>
+  <div class="col-n bold">.${String(Math.round(s.pct*1000)).padStart(3,'0')}</div>
+  <div class="col-n dim">${s.gc}</div>
+  <div class="col-rec" style="color:${s.rec.includes('승')?'#C8102E':'#444'}">${s.rec}</div>
+ </div>`).join('');
+
+// 전체 경기 데이터
+const ALL={
+ '3월':[
+  {d:'3/28',w:'토',opp:'SSG',home:false,ks:6,os:7,out:'패',stad:'문학',t:'14:00'},
+  {d:'3/29',w:'일',opp:'SSG',home:false,ks:6,os:11,out:'패',stad:'문학',t:'14:00'},
+  {d:'3/31',w:'화',opp:'LG',home:false,ks:7,os:2,out:'승',stad:'잠실',t:'18:30'},
+ ],
+ '4월':[
+  {d:'4/1',w:'수',opp:'LG',home:false,ks:2,os:7,out:'패',stad:'잠실',t:'18:30'},
+  {d:'4/2',w:'목',opp:'LG',home:false,ks:1,os:2,out:'패',stad:'잠실',t:'18:30'},
+  {d:'4/3',w:'금',opp:'NC',home:true,ks:2,os:5,out:'패',stad:'광주',t:'18:30'},
+  {d:'4/4',w:'토',opp:'NC',home:true,ks:0,os:6,out:'패',stad:'광주',t:'17:00'},
+  {d:'4/5',w:'일',opp:'NC',home:true,ks:3,os:0,out:'승',stad:'광주',t:'14:00'},
+  {d:'4/7',w:'화',opp:'삼성',home:true,ks:3,os:10,out:'패',stad:'광주',t:'18:30'},
+  {d:'4/8',w:'수',opp:'삼성',home:true,ks:15,os:5,out:'승',stad:'광주',t:'18:30'},
+  {d:'4/9',w:'목',opp:'삼성',home:true,ks:null,os:null,out:'취',stad:'광주',t:'18:30'},
+  {d:'4/10',w:'금',opp:'한화',home:false,ks:6,os:5,out:'승',stad:'대전',t:'18:30'},
+  {d:'4/11',w:'토',opp:'한화',home:false,ks:6,os:5,out:'승',stad:'대전',t:'14:00'},
+  {d:'4/12',w:'일',opp:'한화',home:false,ks:9,os:3,out:'승',stad:'대전',t:'14:00'},
+  {d:'4/14',w:'화',opp:'키움',home:true,ks:6,os:2,out:'승',stad:'광주',t:'18:30'},
+  {d:'4/15',w:'수',opp:'키움',home:true,ks:7,os:5,out:'승',stad:'광주',t:'18:30'},
+  {d:'4/16',w:'목',opp:'키움',home:true,ks:5,os:1,out:'승',stad:'광주',t:'18:30'},
+  {d:'4/17',w:'금',opp:'두산',home:false,ks:7,os:3,out:'승',stad:'잠실',t:'18:30'},
+  {d:'4/18',w:'토',opp:'두산',home:false,ks:4,os:5,out:'패',stad:'잠실',t:'17:00'},
+  {d:'4/19',w:'일',opp:'두산',home:false,ks:3,os:6,out:'패',stad:'잠실',t:'14:00'},
+  {d:'4/21',w:'화',opp:'KT',home:false,ks:5,os:6,out:'패',stad:'수원',t:'18:30'},
+  {d:'4/22',w:'수',opp:'KT',home:false,ks:3,os:8,out:'패',stad:'수원',t:'18:30'},
+  {d:'4/23',w:'목',opp:'KT',home:false,ks:3,os:8,out:'패',stad:'수원',t:'18:30'},
+  {d:'4/24',w:'금',opp:'롯데',home:true,ks:4,os:0,out:'승',stad:'광주',t:'18:30'},
+  {d:'4/25',w:'토',opp:'롯데',home:true,ks:4,os:3,out:'승',stad:'광주',t:'17:00'},
+  {d:'4/26',w:'일',opp:'롯데',home:true,ks:5,os:5,out:'무',stad:'광주',t:'14:00'},
+  {d:'4/28',w:'화',opp:'NC',home:false,ks:4,os:5,out:'패',stad:'창원',t:'18:30'},
+  {d:'4/29',w:'수',opp:'NC',home:false,ks:9,os:4,out:'승',stad:'창원',t:'18:30'},
+  {d:'4/30',w:'목',opp:'NC',home:false,ks:2,os:7,out:'패',stad:'창원',t:'18:30'},
+ ],
+ '5월':[
+  {d:'5/1',w:'금',opp:'KT',home:true,ks:3,os:4,out:'패',stad:'광주',t:'18:30'},
+  {d:'5/2',w:'토',opp:'KT',home:true,ks:6,os:0,out:'승',stad:'광주',t:'17:00'},
+  {d:'5/3',w:'일',opp:'KT',home:true,ks:4,os:6,out:'패',stad:'광주',t:'14:00'},
+  {d:'5/5',w:'화',opp:'한화',home:true,ks:12,os:7,out:'승',stad:'광주',t:'18:30'},
+  {d:'5/6',w:'수',opp:'한화',home:true,ks:2,os:7,out:'패',stad:'광주',t:'18:30'},
+  {d:'5/7',w:'목',opp:'한화',home:true,ks:8,os:11,out:'패',stad:'광주',t:'18:30'},
+  {d:'5/8',w:'금',opp:'롯데',home:false,ks:8,os:2,out:'승',stad:'사직',t:'18:30'},
+  {d:'5/9',w:'토',opp:'롯데',home:false,ks:3,os:1,out:'승',stad:'사직',t:'17:00'},
+  {d:'5/10',w:'일',opp:'롯데',home:false,ks:3,os:7,out:'패',stad:'사직',t:'14:00'},
+  {d:'5/12',w:'화',opp:'두산',home:true,ks:1,os:5,out:'패',stad:'광주',t:'18:30'},
+  {d:'5/13',w:'수',opp:'두산',home:true,ks:9,os:2,out:'승',stad:'광주',t:'18:30'},
+  {d:'5/14',w:'목',opp:'두산',home:true,ks:5,os:3,out:'승',stad:'광주',t:'18:30'},
+  {d:'5/15',w:'금',opp:'삼성',home:false,ks:5,os:4,out:'승',stad:'대구',t:'18:30'},
+  {d:'5/16',w:'토',opp:'삼성',home:false,ks:2,os:5,out:'패',stad:'대구',t:'17:00'},
+  {d:'5/17',w:'일',opp:'삼성',home:false,ks:16,os:7,out:'승',stad:'대구',t:'14:00'},
+  {d:'5/19',w:'화',opp:'LG',home:true,ks:14,os:0,out:'승',stad:'광주',t:'18:30'},
+  {d:'5/20',w:'수',opp:'LG',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},
+  {d:'5/21',w:'목',opp:'LG',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},
+  {d:'5/22',w:'금',opp:'SSG',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},
+  {d:'5/23',w:'토',opp:'SSG',home:true,ks:null,os:null,out:'',stad:'광주',t:'17:00'},
+  {d:'5/24',w:'일',opp:'SSG',home:true,ks:null,os:null,out:'',stad:'광주',t:'14:00'},
+  {d:'5/26',w:'화',opp:'키움',home:false,ks:null,os:null,out:'',stad:'고척',t:'18:30'},
+  {d:'5/27',w:'수',opp:'키움',home:false,ks:null,os:null,out:'',stad:'고척',t:'18:30'},
+  {d:'5/28',w:'목',opp:'키움',home:false,ks:null,os:null,out:'',stad:'고척',t:'18:30'},
+  {d:'5/29',w:'금',opp:'LG',home:false,ks:null,os:null,out:'',stad:'잠실',t:'18:30'},
+  {d:'5/30',w:'토',opp:'LG',home:false,ks:null,os:null,out:'',stad:'잠실',t:'17:00'},
+  {d:'5/31',w:'일',opp:'LG',home:false,ks:null,os:null,out:'',stad:'잠실',t:'14:00'},
+ ],
+ '6월':[{d:'6/2',w:'화',opp:'롯데',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'6/3',w:'수',opp:'롯데',home:true,ks:null,os:null,out:'',stad:'광주',t:'17:00'},{d:'6/4',w:'목',opp:'롯데',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'6/5',w:'금',opp:'삼성',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'6/6',w:'토',opp:'삼성',home:true,ks:null,os:null,out:'',stad:'광주',t:'17:00'},{d:'6/7',w:'일',opp:'삼성',home:true,ks:null,os:null,out:'',stad:'광주',t:'17:00'},{d:'6/9',w:'화',opp:'한화',home:false,ks:null,os:null,out:'',stad:'대전',t:'18:30'},{d:'6/10',w:'수',opp:'한화',home:false,ks:null,os:null,out:'',stad:'대전',t:'18:30'},{d:'6/11',w:'목',opp:'한화',home:false,ks:null,os:null,out:'',stad:'대전',t:'18:30'},{d:'6/12',w:'금',opp:'두산',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'6/13',w:'토',opp:'두산',home:true,ks:null,os:null,out:'',stad:'광주',t:'17:00'},{d:'6/14',w:'일',opp:'두산',home:true,ks:null,os:null,out:'',stad:'광주',t:'17:00'},{d:'6/16',w:'화',opp:'LG',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'6/17',w:'수',opp:'LG',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'6/18',w:'목',opp:'LG',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'6/19',w:'금',opp:'KT',home:false,ks:null,os:null,out:'',stad:'수원',t:'18:30'},{d:'6/20',w:'토',opp:'KT',home:false,ks:null,os:null,out:'',stad:'수원',t:'17:00'},{d:'6/21',w:'일',opp:'KT',home:false,ks:null,os:null,out:'',stad:'수원',t:'17:00'},{d:'6/23',w:'화',opp:'키움',home:false,ks:null,os:null,out:'',stad:'고척',t:'18:30'},{d:'6/24',w:'수',opp:'키움',home:false,ks:null,os:null,out:'',stad:'고척',t:'18:30'},{d:'6/25',w:'목',opp:'키움',home:false,ks:null,os:null,out:'',stad:'고척',t:'18:30'},{d:'6/26',w:'금',opp:'두산',home:false,ks:null,os:null,out:'',stad:'잠실',t:'18:30'},{d:'6/27',w:'토',opp:'두산',home:false,ks:null,os:null,out:'',stad:'잠실',t:'17:00'},{d:'6/28',w:'일',opp:'두산',home:false,ks:null,os:null,out:'',stad:'잠실',t:'17:00'},{d:'6/30',w:'화',opp:'SSG',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'}],
+ '7월':[{d:'7/1',w:'수',opp:'SSG',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'7/2',w:'목',opp:'SSG',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'7/3',w:'금',opp:'NC',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'7/4',w:'토',opp:'NC',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:00'},{d:'7/5',w:'일',opp:'NC',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:00'},{d:'7/7',w:'화',opp:'롯데',home:false,ks:null,os:null,out:'',stad:'사직',t:'18:30'},{d:'7/8',w:'수',opp:'롯데',home:false,ks:null,os:null,out:'',stad:'사직',t:'18:30'},{d:'7/9',w:'목',opp:'롯데',home:false,ks:null,os:null,out:'',stad:'사직',t:'18:30'},{d:'7/16',w:'목',opp:'SSG',home:false,ks:null,os:null,out:'',stad:'문학',t:'18:30'},{d:'7/17',w:'금',opp:'SSG',home:false,ks:null,os:null,out:'',stad:'문학',t:'18:30'},{d:'7/18',w:'토',opp:'SSG',home:false,ks:null,os:null,out:'',stad:'문학',t:'18:00'},{d:'7/19',w:'일',opp:'SSG',home:false,ks:null,os:null,out:'',stad:'문학',t:'18:00'},{d:'7/21',w:'화',opp:'한화',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'7/22',w:'수',opp:'한화',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'7/23',w:'목',opp:'한화',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'7/24',w:'금',opp:'키움',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'7/25',w:'토',opp:'키움',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:00'},{d:'7/26',w:'일',opp:'키움',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:00'},{d:'7/28',w:'화',opp:'삼성',home:false,ks:null,os:null,out:'',stad:'대구',t:'18:30'},{d:'7/29',w:'수',opp:'삼성',home:false,ks:null,os:null,out:'',stad:'대구',t:'18:30'},{d:'7/30',w:'목',opp:'삼성',home:false,ks:null,os:null,out:'',stad:'대구',t:'18:30'},{d:'7/31',w:'금',opp:'NC',home:false,ks:null,os:null,out:'',stad:'창원',t:'18:30'}],
+ '8월':[{d:'8/1',w:'토',opp:'NC',home:false,ks:null,os:null,out:'',stad:'창원',t:'18:00'},{d:'8/2',w:'일',opp:'NC',home:false,ks:null,os:null,out:'',stad:'창원',t:'18:00'},{d:'8/4',w:'화',opp:'KT',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'8/5',w:'수',opp:'KT',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'8/6',w:'목',opp:'KT',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'8/7',w:'금',opp:'LG',home:false,ks:null,os:null,out:'',stad:'잠실',t:'18:30'},{d:'8/8',w:'토',opp:'LG',home:false,ks:null,os:null,out:'',stad:'잠실',t:'18:00'},{d:'8/9',w:'일',opp:'LG',home:false,ks:null,os:null,out:'',stad:'잠실',t:'18:00'},{d:'8/11',w:'화',opp:'삼성',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'8/12',w:'수',opp:'삼성',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'8/13',w:'목',opp:'삼성',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'8/14',w:'금',opp:'두산',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'8/15',w:'토',opp:'두산',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:00'},{d:'8/16',w:'일',opp:'두산',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:00'},{d:'8/18',w:'화',opp:'한화',home:false,ks:null,os:null,out:'',stad:'대전',t:'18:30'},{d:'8/19',w:'수',opp:'한화',home:false,ks:null,os:null,out:'',stad:'대전',t:'18:30'},{d:'8/20',w:'목',opp:'한화',home:false,ks:null,os:null,out:'',stad:'대전',t:'18:30'},{d:'8/21',w:'금',opp:'키움',home:false,ks:null,os:null,out:'',stad:'고척',t:'18:30'},{d:'8/22',w:'토',opp:'키움',home:false,ks:null,os:null,out:'',stad:'고척',t:'18:00'},{d:'8/23',w:'일',opp:'키움',home:false,ks:null,os:null,out:'',stad:'고척',t:'14:00'},{d:'8/25',w:'화',opp:'롯데',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'8/26',w:'수',opp:'롯데',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'8/27',w:'목',opp:'롯데',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'8/28',w:'금',opp:'SSG',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'8/29',w:'토',opp:'SSG',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:00'},{d:'8/30',w:'일',opp:'SSG',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:00'}],
+ '9월':[{d:'9/1',w:'화',opp:'NC',home:false,ks:null,os:null,out:'',stad:'창원',t:'18:30'},{d:'9/2',w:'수',opp:'NC',home:false,ks:null,os:null,out:'',stad:'창원',t:'18:30'},{d:'9/3',w:'목',opp:'NC',home:false,ks:null,os:null,out:'',stad:'창원',t:'18:30'},{d:'9/4',w:'금',opp:'KT',home:true,ks:null,os:null,out:'',stad:'광주',t:'18:30'},{d:'9/5',w:'토',opp:'KT',home:true,ks:null,os:null,out:'',stad:'광주',t:'17:00'},{d:'9/6',w:'일',opp:'KT',home:true,ks:null,os:null,out:'',stad:'광주',t:'17:00'}],
+};
+
+// 누적 성적
+const allG=Object.values(ALL).flat();
+const done=allG.filter(g=>['승','패','무'].includes(g.out));
+const W=done.filter(g=>g.out==='승').length;
+const D=done.filter(g=>g.out==='무').length;
+const L=done.filter(g=>g.out==='패').length;
+document.getElementById('sw').textContent=W;
+document.getElementById('sd').textContent=D;
+document.getElementById('sl').textContent=L;
+const pct=W+L>0?W/(W+L):0;
+document.getElementById('sp').textContent='.'+String(Math.round(pct*1000)).padStart(3,'0');
+
+// 경기행
+function gameRow(g){
+ const isToday=g.d==='5/20';
+ let sh='',bh='';
+ if(g.out==='취'){sh='<div class="score-s">취소</div>';bh='<span class="bc">취소</span>';}
+ else if(g.out==='승'){sh=`<div class="score-w">${g.ks}-${g.os}</div>`;bh='<span class="bw">승</span>';}
+ else if(g.out==='패'){sh=`<div class="score-l">${g.ks}-${g.os}</div>`;bh='<span class="bl">패</span>';}
+ else if(g.out==='무'){sh=`<div class="score-d">${g.ks}-${g.os}</div>`;bh='<span class="bd">무</span>';}
+ else{sh=`<div class="score-s">${g.t||'예정'}</div>`;}
+ return `<div class="game-row${isToday?' today-row':''}">
+  <div class="gr-date">${g.d}<div class="gr-day">${g.w}</div></div>
+  <div class="gr-info">
+   <div class="gr-teams">${g.home?'KIA vs '+g.opp:g.opp+' vs KIA'}${isToday?'<span class="today-chip">오늘</span>':''}</div>
+   <div class="gr-sub">${g.stad} · ${g.home?'홈':'원정'}${g.out===''?' · '+g.t:''}</div>
+  </div>
+  <div class="gr-result">${sh}${bh}</div>
+ </div>`;
+}
+
+// 월탭
+const months=Object.keys(ALL);
+let curMonth='5월';
+document.getElementById('monthTabs').innerHTML=months.map(m=>`
+ <div class="mtab${m===curMonth?' on':['3월','4월'].includes(m)?' past':''}" onclick="setMonth('${m}')">${m}</div>`).join('');
+
+function setMonth(m){
+ curMonth=m;
+ document.querySelectorAll('.mtab').forEach((el,i)=>{
+  el.className='mtab'+(months[i]===m?' on':['3월','4월'].includes(months[i])?' past':'');
+ });
+ document.getElementById('schedBody').innerHTML=
+  `<div class="card" style="padding:6px 10px">${ALL[m].map(gameRow).join('')}</div>`;
+}
+setMonth(curMonth);
+
+// 결과
+const finished=allG.filter(g=>['승','패','무','취'].includes(g.out)).reverse();
+document.getElementById('resultBody').innerHTML=
+ `<div class="card" style="padding:6px 10px">${finished.map(gameRow).join('')}</div>`;
+
+// 1군 엔트리 (실제 API 데이터)
+const players=[
+ {no:1,name:'곽도규',pos:'투',back:'0',hit:'좌투좌타',birth:'2004.04.12',height:'185cm',weight:'90kg'},
+ {no:2,name:'김규성',pos:'내',back:'14',hit:'우투좌타',birth:'1997.03.08',height:'185cm',weight:'88kg'},
+ {no:3,name:'김도영',pos:'내',back:'5',hit:'우투우타',birth:'2003.10.02',height:'183cm',weight:'85kg'},
+ {no:4,name:'김민규',pos:'외',back:'37',hit:'우투우타',birth:'2007.01.26',height:'180cm',weight:'73kg'},
+ {no:5,name:'김범수',pos:'투',back:'49',hit:'좌투좌타',birth:'1995.10.03',height:'181cm',weight:'92kg'},
+ {no:6,name:'김선빈',pos:'내',back:'3',hit:'우투우타',birth:'1989.12.18',height:'165cm',weight:'77kg'},
+ {no:7,name:'김태군',pos:'포',back:'42',hit:'우투우타',birth:'1989.12.30',height:'182cm',weight:'92kg'},
+ {no:8,name:'김태형',pos:'투',back:'10',hit:'우투우타',birth:'2006.12.15',height:'184cm',weight:'95kg'},
+ {no:9,name:'김호령',pos:'외',back:'27',hit:'우투우타',birth:'1992.04.30',height:'178cm',weight:'85kg'},
+ {no:10,name:'나성범',pos:'외',back:'47',hit:'좌투좌타',birth:'1989.10.03',height:'183cm',weight:'100kg'},
+ {no:11,name:'네일',pos:'투',back:'40',hit:'우투우타',birth:'1993.02.08',height:'193cm',weight:'83kg'},
+ {no:12,name:'박민',pos:'내',back:'2',hit:'우투우타',birth:'2001.06.05',height:'184cm',weight:'84kg'},
+ {no:13,name:'박상준',pos:'내',back:'50',hit:'좌투좌타',birth:'2001.08.21',height:'178cm',weight:'104kg'},
+ {no:14,name:'박재현',pos:'외',back:'15',hit:'우투좌타',birth:'2006.12.08',height:'180cm',weight:'73kg'},
+ {no:15,name:'박정우',pos:'외',back:'1',hit:'좌투좌타',birth:'1998.02.01',height:'175cm',weight:'68kg'},
+ {no:16,name:'성영탁',pos:'투',back:'65',hit:'우투우타',birth:'2004.07.28',height:'180cm',weight:'89kg'},
+ {no:17,name:'아데를린',pos:'내',back:'24',hit:'우투우타',birth:'1991.11.18',height:'191cm',weight:'108kg'},
+ {no:18,name:'양현종',pos:'투',back:'54',hit:'좌투좌타',birth:'1988.03.01',height:'183cm',weight:'91kg'},
+ {no:19,name:'올러',pos:'투',back:'33',hit:'우투우타',birth:'1994.10.17',height:'193cm',weight:'102kg'},
+ {no:20,name:'이형범',pos:'투',back:'28',hit:'우투우타',birth:'1994.02.27',height:'181cm',weight:'80kg'},
+ {no:21,name:'정해영',pos:'투',back:'62',hit:'우투우타',birth:'2001.08.23',height:'189cm',weight:'98kg'},
+ {no:22,name:'정현창',pos:'내',back:'12',hit:'우투좌타',birth:'2006.07.14',height:'177cm',weight:'70kg'},
+ {no:23,name:'조상우',pos:'투',back:'11',hit:'우투우타',birth:'1994.09.04',height:'186cm',weight:'97kg'},
+ {no:24,name:'최지민',pos:'투',back:'39',hit:'좌투좌타',birth:'2003.09.10',height:'185cm',weight:'100kg'},
+ {no:25,name:'한승연',pos:'외',back:'31',hit:'우투우타',birth:'2003.06.09',height:'183cm',weight:'92kg'},
+ {no:26,name:'한재승',pos:'투',back:'55',hit:'우투우타',birth:'2001.11.21',height:'180cm',weight:'90kg'},
+ {no:27,name:'한준수',pos:'포',back:'25',hit:'우투좌타',birth:'1999.02.13',height:'184cm',weight:'95kg'},
+ {no:28,name:'홍민규',pos:'투',back:'67',hit:'우투좌타',birth:'2006.09.11',height:'183cm',weight:'87kg'},
+ {no:29,name:'황동하',pos:'투',back:'41',hit:'우투우타',birth:'2002.07.30',height:'183cm',weight:'96kg'},
+];
+const posColor={'투':'#4a9eff','내':'#2da87a','외':'#f5a623','포':'#c084fc'};
+const posBg={'투':'rgba(74,158,255,.15)','내':'rgba(45,168,122,.15)','외':'rgba(245,166,35,.15)','포':'rgba(192,132,252,.15)'};
+
+document.getElementById('rSummary').innerHTML=[
+ {lbl:'전체',val:players.length,color:'#C8102E'},
+ {lbl:'투수',val:players.filter(p=>p.pos==='투').length,color:'#4a9eff'},
+ {lbl:'내야',val:players.filter(p=>p.pos==='내').length,color:'#2da87a'},
+ {lbl:'외야',val:players.filter(p=>p.pos==='외').length,color:'#f5a623'},
+ {lbl:'포수',val:players.filter(p=>p.pos==='포').length,color:'#c084fc'},
+].map(s=>`<div class="rs-box"><div class="rs-val" style="color:${s.color}">${s.val}</div><div class="rs-lbl">${s.lbl}</div></div>`).join('');
+
+function renderRoster(data){
+ document.getElementById('rosterBody').innerHTML=data.map((p,i)=>`
+  <tr>
+   <td style="color:#444;font-size:10px">${i+1}</td>
+   <td class="tname">${p.name}</td>
+   <td><span class="pos-tag" style="color:${posColor[p.pos]};background:${posBg[p.pos]}">${p.pos}</span></td>
+   <td style="font-weight:700;color:#fff">${p.back}</td>
+   <td style="color:#777">${p.hit}</td>
+   <td style="color:#555">${p.birth}</td>
+   <td style="color:#777">${p.height}</td>
+   <td style="color:#777">${p.weight}</td>
+  </tr>`).join('');
+}
+function setSort(key){
+ document.querySelectorAll('.sbtn').forEach((el,i)=>el.classList.toggle('on',['NAME','POS','NUM'][i]===key));
+ let s=[...players];
+ if(key==='NAME') s.sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+ else if(key==='POS') s.sort((a,b)=>({'투':0,'내':1,'외':2,'포':3}[a.pos]||0)-({'투':0,'내':1,'외':2,'포':3}[b.pos]||0)||a.name.localeCompare(b.name,'ko'));
+ else if(key==='NUM') s.sort((a,b)=>parseInt(a.back)-parseInt(b.back));
+ renderRoster(s);
+}
+setSort('NAME');
+function setEtab(i){document.querySelectorAll('.etab').forEach((el,idx)=>el.classList.toggle('on',idx===i));}
+
+// 탭 전환
+function sw(i){
+ document.querySelectorAll('.page').forEach((el,idx)=>el.classList.toggle('on',idx===i));
+ document.querySelectorAll('.nav-item').forEach((el,idx)=>el.classList.toggle('on',idx===i));
+ document.querySelectorAll('.bn').forEach((el,idx)=>{if(idx<4)el.classList.toggle('on',idx===i);});
+ document.getElementById('mainBody').scrollTop=0;
+}
+</script>
+</body>
+</html>
