@@ -219,7 +219,7 @@ function nowYM() {
 }
 
 // ── 전역 상태 ─────────────────────────────────────────
-let G = { recent: null, sched: {}, roster: [], rank: [], rankTitle: '' };
+let G = { recent: null, sched: {}, roster: [], rank: [], rankTitle: '', kia: null };
 let curMonth = '5월';
 
 // ── 경기행 렌더 ──────────────────────────────────────
@@ -279,14 +279,28 @@ function renderHome() {
     </div>`;
   }
 
-  // 누적 성적
-  const all = Object.values(G.sched).flat();
-  const done = all.filter(g => ['승','패','무'].includes(g.outcome));
-  const W = done.filter(g => g.outcome==='승').length;
-  const D = done.filter(g => g.outcome==='무').length;
-  const L = done.filter(g => g.outcome==='패').length;
-  const pct = W+L > 0 ? W/(W+L) : 0;
-  const kiaGC = G.rank.find(r=>r.t==='KIA')?.gc || '-';
+  // 누적 성적 (기아 API 순위 데이터 우선, 없으면 일정 데이터로 계산)
+  let W, D, L, pct, kiaGC;
+  if (G.kia) {
+    // 기아 홈페이지 API에서 직접 가져온 실제 성적
+    W = G.kia.win;
+    D = G.kia.drawn;
+    L = G.kia.lose;
+    pct = parseFloat(G.kia.wra) || 0;
+    kiaGC = (G.kia.gb === '0.0' || G.kia.gb === '-') ? '-' : G.kia.gb;
+  } else {
+    // fallback: 3/28 이후 일정 데이터 합산
+    const all = Object.values(G.sched).flat().filter(g => {
+      const d = String(g.displayDate || g.gameDate || '');
+      return d >= '20260328'; // 개막일 이후만
+    });
+    const done = all.filter(g => ['승','패','무'].includes(g.outcome));
+    W = done.filter(g => g.outcome==='승').length;
+    D = done.filter(g => g.outcome==='무').length;
+    L = done.filter(g => g.outcome==='패').length;
+    pct = W+L > 0 ? W/(W+L) : 0;
+    kiaGC = G.rank.find(r=>r.t==='KIA')?.gc || '-';
+  }
 
   html += `<div class="sec">2026 시즌 누적 성적</div>
    <div class="stat-row">
@@ -485,20 +499,28 @@ async function loadAll(manual=false) {
       })).filter(p => p.name);
     } catch(e) { console.warn('엔트리 실패:', e); }
 
-    // 4. KBO 순위
+    // 4. 팀 순위 (기아 홈페이지 API - tigers.co.kr/v1/game/stats/teamrankbyyear)
     try {
-      const rank = await fetchKBORank();
-      if (rank?.rows?.length > 0) {
-        G.rankTitle = rank.title || 'KBO 공식';
-        G.rank = rank.rows.map(r => {
-          const c = r.row || [];
-          const t = i => (c[i]?.Text||'').replace(/<[^>]+>/g,'').trim();
-          return { r:parseInt(t(0))||0, t:t(1), g:parseInt(t(2))||0, w:parseInt(t(3))||0,
-                   d:parseInt(t(4))||0, l:parseInt(t(5))||0, pct:parseFloat(t(6))||0,
-                   gc:t(7), rec:t(8) };
-        }).filter(r=>r.t);
+      const rankRes = await fetchAPI('/game/stats/teamrankbyyear?gameSearch.gyear=2026');
+      const rankList = rankRes?.data?.list || [];
+      if (rankList.length > 0) {
+        G.rank = rankList.map(t => ({
+          r: t.rank,
+          t: t.teamName,
+          g: t.game,
+          w: t.win,
+          d: t.drawn,
+          l: t.lose,
+          pct: parseFloat(t.wra) || 0,
+          gc: (t.gb === '0.0' || t.gb === '-') ? '-' : t.gb,
+          rec: t.continue1 || '-',
+        }));
+        // KIA 데이터로 누적성적 업데이트
+        const kiaData = rankList.find(t => t.teamCode === 'HT');
+        if (kiaData) G.kia = kiaData;
+        G.rankTitle = '기아 홈피 · 실시간';
       }
-    } catch(e) { console.warn('KBO 순위 실패:', e); }
+    } catch(e) { console.warn('팀순위 실패:', e); }
 
     // 렌더
     renderHome();
