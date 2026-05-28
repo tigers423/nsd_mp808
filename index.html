@@ -133,23 +133,20 @@ body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh
   <div class="nav-wrap">
    <div class="nav-item on" onclick="sw(0)">홈</div>
    <div class="nav-item" onclick="sw(1)">전체일정</div>
-   <div class="nav-item" onclick="sw(2)">경기결과</div>
-   <div class="nav-item" onclick="sw(3)">1군현황</div>
+   <div class="nav-item" onclick="sw(2)">1군현황</div>
   </div>
  </div>
 
  <div class="body" id="mainBody">
   <div class="page on" id="p0"><div id="homeDiv"><div class="spinner"></div></div></div>
   <div class="page" id="p1"><div class="mtabs" id="mtabs"></div><div id="schedDiv"><div class="spinner"></div></div></div>
-  <div class="page" id="p2"><div id="resultDiv"><div class="spinner"></div></div></div>
-  <div class="page" id="p3"><div id="rosterDiv"><div class="spinner"></div></div></div>
+  <div class="page" id="p2"><div id="rosterDiv"><div class="spinner"></div></div></div>
  </div>
 
  <div class="bnav">
   <div class="bn on" onclick="sw(0)"><i class="ti ti-home"></i><span>홈</span></div>
   <div class="bn" onclick="sw(1)"><i class="ti ti-calendar"></i><span>전체일정</span></div>
-  <div class="bn" onclick="sw(2)"><i class="ti ti-trophy"></i><span>결과</span></div>
-  <div class="bn" onclick="sw(3)"><i class="ti ti-list-check"></i><span>1군현황</span></div>
+  <div class="bn" onclick="sw(2)"><i class="ti ti-list-check"></i><span>1군현황</span></div>
   <div class="bdiv"></div>
   <div class="bext" onclick="window.open('https://www.youtube.com/@kiatigerstv','_blank')">
    <svg width="30" height="22" viewBox="0 0 60 44"><rect width="60" height="44" rx="6" fill="#888"/><polygon points="5,7 55,7 55,19 38,19 38,39 22,39 22,19 5,19" fill="#1a1a2e"/><polygon points="5,7 55,7 55,19 38,19 38,39 22,39 22,19 5,19" fill="none" stroke="#C8102E" stroke-width="2.5"/><polygon points="7,9 53,9 53,17 36,17 36,37 24,37 24,17 7,17" fill="#111"/></svg>
@@ -182,26 +179,6 @@ async function fetchAPI(path) {
     } catch(e) { continue; }
   }
   throw new Error('모든 프록시 실패: ' + path);
-}
-
-// ── KBO 순위 (여러 방법 시도) ────────────────────────
-const KBO_RANK_URL = 'https://www.koreabaseball.com/ws/Main.asmx/GetTeamRank';
-const KBO_PROXIES = [
-  url => 'https://corsproxy.io/?' + encodeURIComponent(url),
-  url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-  url => 'https://thingproxy.freeboard.io/fetch/' + url,
-];
-
-async function fetchKBORank() {
-  for (const proxy of KBO_PROXIES) {
-    try {
-      const res = await fetch(proxy(KBO_RANK_URL), { signal: AbortSignal.timeout(6000) });
-      if (!res.ok) continue;
-      const json = await res.json();
-      if (json?.rows?.length > 0) return json;
-    } catch(e) { continue; }
-  }
-  return null;
 }
 
 // ── 유틸 ─────────────────────────────────────────────
@@ -388,15 +365,6 @@ function setMonth(m) {
     : `<div class="err">일정 없음</div>`;
 }
 
-// ── 결과 렌더 ────────────────────────────────────────
-function renderResult() {
-  const all = Object.values(G.sched).flat();
-  const fin = all.filter(g => g.outcome && g.outcome !== '').reverse();
-  document.getElementById('resultDiv').innerHTML = fin.length
-    ? `<div class="sec" style="margin-top:0">완료된 경기 · 최신순</div><div class="card" style="padding:6px 10px">${fin.map(g=>gameRow(g,false)).join('')}</div>`
-    : `<div class="err">완료된 경기 없음</div>`;
-}
-
 // ── 1군 렌더 ─────────────────────────────────────────
 const PC = {'투':'#4a9eff','내':'#2da87a','외':'#f5a623','포':'#c084fc'};
 const PB = {'투':'rgba(74,158,255,.15)','내':'rgba(45,168,122,.15)','외':'rgba(245,166,35,.15)','포':'rgba(192,132,252,.15)'};
@@ -461,7 +429,6 @@ async function loadAll(manual=false) {
   if (manual) {
     document.getElementById('homeDiv').innerHTML = '<div class="spinner"></div>';
     document.getElementById('schedDiv').innerHTML = '<div class="spinner"></div>';
-    document.getElementById('resultDiv').innerHTML = '<div class="spinner"></div>';
     document.getElementById('rosterDiv').innerHTML = '<div class="spinner"></div>';
   }
 
@@ -487,15 +454,16 @@ async function loadAll(manual=false) {
     // 3. 1군 엔트리
     try {
       const ent = await fetchAPI('/game/entry/daily?gameSearch.entry=1&gameSearch.sortKey=NAME');
-      const list = ent?.data?.list || ent?.list || [];
+      // API 응답: data.playerList
+      const list = ent?.data?.playerList || ent?.data?.list || ent?.list || [];
       G.roster = list.map(p => ({
         name: p.playerName || p.name || '',
-        pos: PM[p.positionName || p.pos || ''] || '투',
-        back: String(p.backNum || p.back || ''),
-        hit: p.hitType || p.hit || '',
-        birth: (p.birthDay || p.birth || '').replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3'),
-        height: p.height ? p.height+'cm' : '',
-        weight: p.weight ? p.weight+'kg' : '',
+        pos: p.position2 || PM[p.positionName || p.pos || ''] || '투',
+        back: String(p.backnum || p.backNum || p.back || ''),
+        hit: p.hittype || p.hitType || p.hit || '',
+        birth: (p.birth || p.birthDay || '').replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3'),
+        height: p.height || '',
+        weight: p.weight || '',
       })).filter(p => p.name);
     } catch(e) { console.warn('엔트리 실패:', e); }
 
@@ -525,7 +493,6 @@ async function loadAll(manual=false) {
     // 렌더
     renderHome();
     renderSched();
-    renderResult();
     renderRoster();
 
     const n = new Date();
@@ -545,29 +512,12 @@ async function loadAll(manual=false) {
 function sw(i) {
   document.querySelectorAll('.page').forEach((el,idx)=>el.classList.toggle('on',idx===i));
   document.querySelectorAll('.nav-item').forEach((el,idx)=>el.classList.toggle('on',idx===i));
-  document.querySelectorAll('.bn').forEach((el,idx)=>{if(idx<4)el.classList.toggle('on',idx===i);});
+  document.querySelectorAll('.bn').forEach((el,idx)=>{if(idx<3)el.classList.toggle('on',idx===i);});
   document.getElementById('mainBody').scrollTop = 0;
 }
 
-// 초기 로딩
+// 앱 열 때마다 자동 로딩
 loadAll();
-
-// 매일 오전 7시 자동 갱신
-function scheduleDaily7AM() {
-  const now = new Date();
-  const next7 = new Date();
-  next7.setHours(7, 0, 0, 0);
-  // 오늘 7시가 이미 지났으면 내일 7시로
-  if (now >= next7) next7.setDate(next7.getDate() + 1);
-  const msUntil7 = next7 - now;
-  console.log(`다음 자동 업데이트: ${next7.toLocaleString('ko-KR')} (${Math.round(msUntil7/1000/60)}분 후)`);
-  setTimeout(() => {
-    loadAll();
-    // 이후 매 24시간마다 반복
-    setInterval(() => loadAll(), 24 * 60 * 60 * 1000);
-  }, msUntil7);
-}
-scheduleDaily7AM();
 </script>
 </body>
 </html>
