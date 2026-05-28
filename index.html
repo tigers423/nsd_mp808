@@ -229,7 +229,7 @@ const FALLBACK_ROSTER = [
   {name:'황동하',pos:'투',back:'41',hit:'우투우타',birth:'2002.07.30',height:'183cm',weight:'96kg'},
 ];
 
-let G = { recent: null, sched: {}, roster: FALLBACK_ROSTER, rank: [], rankTitle: '', kia: null };
+let G = { recent: null, sched: {}, roster: FALLBACK_ROSTER, rank: [], rankTitle: '', kia: null, entryCache: {}, inout: [] };
 let curMonth = '5월';
 
 // ── 경기행 렌더 ──────────────────────────────────────
@@ -433,7 +433,8 @@ function renderRoster() {
      <thead><tr><th>No</th><th style="text-align:left">선수명</th><th>포지션</th><th>등번호</th><th>투타</th><th>생년월일</th><th>신장</th><th>체중</th></tr></thead>
      <tbody id="rbody"></tbody>
     </table>
-   </div>`;
+   </div>
+   <div id="inoutDiv" style="display:none"></div>`;
   setSort('NAME');
 }
 
@@ -455,7 +456,120 @@ function setSort(key) {
    <td style="color:#666">${p.weight}</td>
   </tr>`).join('');
 }
-function setEtab(i){document.querySelectorAll('.etab').forEach((el,idx)=>el.classList.toggle('on',idx===i));}
+function setEtab(i) {
+  document.querySelectorAll('.etab').forEach((el,idx)=>el.classList.toggle('on',idx===i));
+  const entryMap = {0:'1군', 1:'퓨처스', 2:'육성/잔류/재활군', 3:'등록/말소'};
+  loadEntryTab(i);
+}
+
+async function loadEntryTab(tabIdx) {
+  const tb = document.getElementById('rbody');
+  const inoutDiv = document.getElementById('inoutDiv');
+  if (inoutDiv) inoutDiv.style.display = tabIdx === 3 ? 'block' : 'none';
+
+  // 등록/말소 탭
+  if (tabIdx === 3) {
+    if (G.inout.length > 0) {
+      renderInout(G.inout);
+    } else {
+      if (inoutDiv) inoutDiv.innerHTML = '<div class="spinner"></div>';
+      try {
+        const n = new Date();
+        const ym = n.getFullYear() + '&gameSearch.gmonth=' + String(n.getMonth()+1).padStart(2,'0');
+        const res = await fetchAPI('/game/entry/inout?gameSearch.gyear=' + n.getFullYear() + '&gameSearch.gmonth=' + String(n.getMonth()+1).padStart(2,'0'));
+        G.inout = res?.data?.inOutList || [];
+        renderInout(G.inout);
+      } catch(e) {
+        if (inoutDiv) inoutDiv.innerHTML = '<div class="err">등록/말소 데이터 없음</div>';
+      }
+    }
+    return;
+  }
+
+  // 1군/퓨처스/육성잔류 탭 (entry=1,2,3)
+  const entryNum = tabIdx + 1;
+  const cacheKey = 'entry' + entryNum;
+  if (G.entryCache[cacheKey]?.length > 0) {
+    renderEntryTable(G.entryCache[cacheKey]);
+    return;
+  }
+  if (tb) tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto"></div></td></tr>';
+  try {
+    const res = await fetchAPI('/game/entry/daily?gameSearch.entry=' + entryNum + '&gameSearch.sortKey=NAME');
+    const list = res?.data?.playerList || [];
+    const parsed = list.map(p => ({
+      name: p.playerName || '',
+      pos: p.position2 || '투',
+      back: String(p.backnum || ''),
+      hit: p.hittype || '',
+      birth: String(p.birth || '').replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3'),
+      height: p.height || '',
+      weight: p.weight || '',
+    })).filter(p => p.name);
+    G.entryCache[cacheKey] = parsed;
+    if (tabIdx === 0) G.roster = parsed; // 1군 업데이트
+    renderEntryTable(parsed);
+  } catch(e) {
+    if (tabIdx === 0 && G.roster.length > 0) {
+      renderEntryTable(G.roster);
+    } else {
+      if (tb) tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#555;font-size:12px">데이터 없음</td></tr>';
+    }
+  }
+}
+
+function renderEntryTable(data) {
+  // 테이블 보이게, inout 숨기게
+  const tblWrap = document.querySelector('.twrap');
+  const inoutDiv = document.getElementById('inoutDiv');
+  if (tblWrap) tblWrap.style.display = 'block';
+  if (inoutDiv) inoutDiv.style.display = 'none';
+
+  const tb = document.getElementById('rbody');
+  if (!tb) return;
+  const sorted = [...data].sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+  tb.innerHTML = sorted.map((p,i) => `<tr>
+   <td style="color:#333;font-size:10px">${i+1}</td>
+   <td class="tn">${p.name}</td>
+   <td><span class="ptag" style="color:${PC[p.pos]||'#888'};background:${PB[p.pos]||'rgba(255,255,255,.05)'}">${p.pos}</span></td>
+   <td style="font-weight:700;color:#fff">${p.back}</td>
+   <td style="color:#666">${p.hit}</td>
+   <td style="color:#444">${p.birth}</td>
+   <td style="color:#666">${p.height}</td>
+   <td style="color:#666">${p.weight}</td>
+  </tr>`).join('');
+}
+
+function renderInout(list) {
+  const tblWrap = document.querySelector('.twrap');
+  const inoutDiv = document.getElementById('inoutDiv');
+  if (tblWrap) tblWrap.style.display = 'none';
+  if (!inoutDiv) return;
+  inoutDiv.style.display = 'block';
+
+  // 날짜 내림차순 정렬
+  const sorted = [...list].sort((a,b) => String(b.regYnDate).localeCompare(String(a.regYnDate)));
+  inoutDiv.innerHTML = `
+   <div class="twrap">
+    <table class="rtbl" style="min-width:280px">
+     <thead><tr>
+      <th style="text-align:left">선수명</th>
+      <th>구분</th>
+      <th>날짜</th>
+     </tr></thead>
+     <tbody>${sorted.map(p => {
+       const isIn = p.regYn === 'Y';
+       const d = String(p.regYnDate);
+       const date = d.slice(0,4)+'.'+d.slice(4,6)+'.'+d.slice(6,8);
+       return `<tr>
+        <td class="tn">${p.playerName}</td>
+        <td><span style="font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600;background:${isIn?'rgba(200,16,46,.15)':'rgba(80,80,80,.2)'};color:${isIn?'#C8102E':'#888'}">${isIn?'등록':'말소'}</span></td>
+        <td style="color:#555;font-size:11px">${date}</td>
+       </tr>`;
+     }).join('')}</tbody>
+    </table>
+   </div>`;
+}
 
 // ── 메인 로딩 ────────────────────────────────────────
 async function loadAll(manual=false) {
@@ -508,6 +622,7 @@ async function loadAll(manual=false) {
           height: p.height || '',
           weight: p.weight || '',
         })).filter(p => p.name);
+        G.entryCache['entry1'] = G.roster;
         console.log('엔트리 API 로딩 성공:', G.roster.length, '명');
       } else {
         console.warn('엔트리 API 응답 비어있음 → fallback 사용');
