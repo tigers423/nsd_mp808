@@ -196,7 +196,40 @@ function nowYM() {
 }
 
 // ── 전역 상태 ─────────────────────────────────────────
-let G = { recent: null, sched: {}, roster: [], rank: [], rankTitle: '', kia: null };
+// API 실패 시 fallback (5/27 기준 실제 데이터)
+const FALLBACK_ROSTER = [
+  {name:'곽도규',pos:'투',back:'0', hit:'좌투좌타',birth:'2004.04.12',height:'185cm',weight:'90kg'},
+  {name:'김규성',pos:'내',back:'14',hit:'우투좌타',birth:'1997.03.08',height:'185cm',weight:'88kg'},
+  {name:'김도영',pos:'내',back:'5', hit:'우투우타',birth:'2003.10.02',height:'183cm',weight:'85kg'},
+  {name:'김민규',pos:'외',back:'37',hit:'우투우타',birth:'2007.01.26',height:'180cm',weight:'73kg'},
+  {name:'김범수',pos:'투',back:'49',hit:'좌투좌타',birth:'1995.10.03',height:'181cm',weight:'92kg'},
+  {name:'김선빈',pos:'내',back:'3', hit:'우투우타',birth:'1989.12.18',height:'165cm',weight:'77kg'},
+  {name:'김태군',pos:'포',back:'42',hit:'우투우타',birth:'1989.12.30',height:'182cm',weight:'92kg'},
+  {name:'김호령',pos:'외',back:'27',hit:'우투우타',birth:'1992.04.30',height:'178cm',weight:'85kg'},
+  {name:'나성범',pos:'외',back:'47',hit:'좌투좌타',birth:'1989.10.03',height:'183cm',weight:'100kg'},
+  {name:'네일',  pos:'투',back:'40',hit:'우투우타',birth:'1993.02.08',height:'193cm',weight:'83kg'},
+  {name:'박민',  pos:'내',back:'2', hit:'우투우타',birth:'2001.06.05',height:'184cm',weight:'84kg'},
+  {name:'박재현',pos:'외',back:'15',hit:'우투좌타',birth:'2006.12.08',height:'180cm',weight:'73kg'},
+  {name:'박정우',pos:'외',back:'1', hit:'좌투좌타',birth:'1998.02.01',height:'175cm',weight:'68kg'},
+  {name:'성영탁',pos:'투',back:'65',hit:'우투우타',birth:'2004.07.28',height:'180cm',weight:'89kg'},
+  {name:'아데를린',pos:'내',back:'24',hit:'우투우타',birth:'1991.11.18',height:'191cm',weight:'108kg'},
+  {name:'양현종',pos:'투',back:'54',hit:'좌투좌타',birth:'1988.03.01',height:'183cm',weight:'91kg'},
+  {name:'오선우',pos:'내',back:'56',hit:'좌투좌타',birth:'1996.12.13',height:'186cm',weight:'95kg'},
+  {name:'올러',  pos:'투',back:'33',hit:'우투우타',birth:'1994.10.17',height:'193cm',weight:'102kg'},
+  {name:'이의리',pos:'투',back:'48',hit:'좌투좌타',birth:'2002.06.16',height:'185cm',weight:'90kg'},
+  {name:'이형범',pos:'투',back:'28',hit:'우투우타',birth:'1994.02.27',height:'181cm',weight:'80kg'},
+  {name:'정해영',pos:'투',back:'62',hit:'우투우타',birth:'2001.08.23',height:'189cm',weight:'98kg'},
+  {name:'정현창',pos:'내',back:'12',hit:'우투좌타',birth:'2006.07.14',height:'177cm',weight:'70kg'},
+  {name:'조상우',pos:'투',back:'11',hit:'우투우타',birth:'1994.09.04',height:'186cm',weight:'97kg'},
+  {name:'최지민',pos:'투',back:'39',hit:'좌투좌타',birth:'2003.09.10',height:'185cm',weight:'100kg'},
+  {name:'한승연',pos:'외',back:'31',hit:'우투우타',birth:'2003.06.09',height:'183cm',weight:'92kg'},
+  {name:'한재승',pos:'투',back:'55',hit:'우투우타',birth:'2001.11.21',height:'180cm',weight:'90kg'},
+  {name:'한준수',pos:'포',back:'25',hit:'우투좌타',birth:'1999.02.13',height:'184cm',weight:'95kg'},
+  {name:'홍민규',pos:'투',back:'67',hit:'우투좌타',birth:'2006.09.11',height:'183cm',weight:'87kg'},
+  {name:'황동하',pos:'투',back:'41',hit:'우투우타',birth:'2002.07.30',height:'183cm',weight:'96kg'},
+];
+
+let G = { recent: null, sched: {}, roster: FALLBACK_ROSTER, rank: [], rankTitle: '', kia: null };
 let curMonth = '5월';
 
 // ── 경기행 렌더 ──────────────────────────────────────
@@ -370,6 +403,8 @@ const PC = {'투':'#4a9eff','내':'#2da87a','외':'#f5a623','포':'#c084fc'};
 const PB = {'투':'rgba(74,158,255,.15)','내':'rgba(45,168,122,.15)','외':'rgba(245,166,35,.15)','포':'rgba(192,132,252,.15)'};
 const PM = {'투수':'투','포수':'포','내야수':'내','외야수':'외','투':'투','포':'포','내':'내','외':'외'};
 
+
+
 function renderRoster() {
   if (!G.roster.length) { document.getElementById('rosterDiv').innerHTML='<div class="err">엔트리 데이터 없음</div>'; return; }
   const sum = [
@@ -454,18 +489,34 @@ async function loadAll(manual=false) {
     // 3. 1군 엔트리
     try {
       const ent = await fetchAPI('/game/entry/daily?gameSearch.entry=1&gameSearch.sortKey=NAME');
-      // API 응답: data.playerList
-      const list = ent?.data?.playerList || ent?.data?.list || ent?.list || [];
-      G.roster = list.map(p => ({
-        name: p.playerName || p.name || '',
-        pos: p.position2 || PM[p.positionName || p.pos || ''] || '투',
-        back: String(p.backnum || p.backNum || p.back || ''),
-        hit: p.hittype || p.hitType || p.hit || '',
-        birth: (p.birth || p.birthDay || '').replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3'),
-        height: p.height || '',
-        weight: p.weight || '',
-      })).filter(p => p.name);
-    } catch(e) { console.warn('엔트리 실패:', e); }
+      // 응답 구조: {"data":{"playerList":[...]}} 또는 프록시 경유 시 다양한 형태
+      let list = [];
+      if (ent?.data?.playerList?.length > 0) list = ent.data.playerList;
+      else if (ent?.data?.list?.length > 0) list = ent.data.list;
+      else if (ent?.playerList?.length > 0) list = ent.playerList;
+      else if (ent?.list?.length > 0) list = ent.list;
+      else if (Array.isArray(ent?.data)) list = ent.data;
+      else if (Array.isArray(ent)) list = ent;
+
+      if (list.length > 0) {
+        G.roster = list.map(p => ({
+          name: p.playerName || p.name || '',
+          pos: p.position2 || PM[p.positionName || ''] || '투',
+          back: String(p.backnum || p.backNum || p.back || ''),
+          hit: p.hittype || p.hitType || p.hit || '',
+          birth: String(p.birth || p.birthDay || '').replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3'),
+          height: p.height || '',
+          weight: p.weight || '',
+        })).filter(p => p.name);
+        console.log('엔트리 API 로딩 성공:', G.roster.length, '명');
+      } else {
+        console.warn('엔트리 API 응답 비어있음 → fallback 사용');
+        G.roster = FALLBACK_ROSTER;
+      }
+    } catch(e) {
+      console.warn('엔트리 API 실패 → fallback 사용:', e.message);
+      G.roster = FALLBACK_ROSTER;
+    }
 
     // 4. 팀 순위 (기아 홈페이지 API - tigers.co.kr/v1/game/stats/teamrankbyyear)
     try {
