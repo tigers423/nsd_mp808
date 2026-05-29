@@ -318,7 +318,7 @@ function renderHome() {
     <div class="stat-box"><div class="sv">${D}</div><div class="sl">무</div></div>
     <div class="stat-box"><div class="sv">${L}</div><div class="sl">패</div></div>
     <div class="stat-box"><div class="sv r">.${String(Math.round(pct*1000)).padStart(3,'0')}</div><div class="sl">승률</div></div>
-    <div class="stat-box"><div class="sv" style="font-size:${String(kiaGC).length>3?14:18}px">${kiaGC}</div><div class="sl">게임차</div></div>
+    <div class="stat-box"><div class="sv" style="font-size:${String(kiaGC).length>3?14:18}px">${kiaGC}</div><div class="sl">승차</div></div>
    </div>`;
 
   // KBO 순위
@@ -328,7 +328,7 @@ function renderHome() {
      <div class="st-hd">
       <span class="cr">#</span><span class="ct">팀</span>
       <span class="cn">경기</span><span class="cn">승</span><span class="cn">무</span><span class="cn">패</span>
-      <span class="cn b">승률</span><span class="cn">게임차</span><span class="crec">최근</span>
+      <span class="cn">승차</span><span class="cn b">승률</span><span class="crec">최근</span>
      </div>`;
   if (G.rank.length > 0) {
     html += G.rank.map(s => `
@@ -337,8 +337,8 @@ function renderHome() {
       <div class="ct${s.t==='KIA'?' kia':''}">${s.t}</div>
       <div class="cn d">${s.g}</div><div class="cn">${s.w}</div>
       <div class="cn d">${s.d}</div><div class="cn">${s.l}</div>
-      <div class="cn b">.${String(Math.round(s.pct*1000)).padStart(3,'0')}</div>
       <div class="cn d">${s.gc}</div>
+      <div class="cn b">.${String(Math.round(s.pct*1000)).padStart(3,'0')}</div>
       <div class="crec" style="color:${s.rec&&s.rec.includes('승')?'#C8102E':'#444'}">${s.rec||'-'}</div>
      </div>`).join('');
   } else {
